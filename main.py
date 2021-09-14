@@ -3,6 +3,9 @@ import random as r
 
 from graphics import *
 
+screen_width = 800
+screen_height = 600
+
 
 class SplineCurve:
 	xCoefficients = (0, 0, 0, 0)
@@ -48,7 +51,7 @@ def add_tuples(a, b):
 		
 		
 def make_point(x, y):
-	return Point(int(x) + 400, 300 - int(y))
+	return Point(int(x) + screen_width // 2, screen_height // 2 - int(y))
 
 
 def clear(win):
@@ -101,6 +104,8 @@ def rotations(window, coefficients):
 	clear(window)
 	draw_shape(window, points)
 	lines = []
+	point = Point(0, 0)
+	point.draw(window)
 	while window.isOpen():
 		if step >= 1:
 			step = 0
@@ -108,12 +113,17 @@ def rotations(window, coefficients):
 			step += 0.002
 		for line in lines:
 			line.undraw()
-		_, lines = draw_lines(window, coefficients, step)
+		point.undraw()
+		point, lines = draw_lines(window, coefficients, step)
+		point = make_point(point.real, point.imag)
+		point = Circle(point, 2)
+		point.setFill("black")
+		point.draw(window)
 		update(50)
 
 
 def generate_random_coefficients(amount):
-	size = 100
+	size = 200
 	coefficients = [
 		complex(0, 0)
 	]
@@ -129,14 +139,14 @@ def generate_random_coefficients(amount):
 
 
 def main():
-	t = (2, -3, 0, 1)
-	print(t)
-	t = tuple(2 * i for i in t)
-	print(t)
+	window = GraphWin("Main Window", screen_width, screen_height, autoflush=False)
 	"""
-	window = GraphWin("Main Window", 800, 600, autoflush=False)
 	coefficients = generate_random_coefficients(10)
 	rotations(window, coefficients)"""
+	spline = SplineCurve((-100, 0), 45, (100, 0), -45)
+	spline.draw_spline(window, 100)
+	window.getMouse()
+	window.close()
 
 
 if __name__ == '__main__':
