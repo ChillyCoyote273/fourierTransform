@@ -15,8 +15,8 @@ class SplineCurve:
 	def __init__(self, point_a, tangent_a, point_b, tangent_b):
 		x_start = point_a[0]
 		x_end = point_b[0]
-		x_start_slope = cmath.cos(tangent_a)
-		x_end_slope = cmath.cos(tangent_b)
+		x_start_slope = tangent_a[0]
+		x_end_slope = tangent_b[0]
 		x_polynomial = multiply_tuple((2, -3, 0, 1), x_start)
 		x_polynomial = add_tuples(x_polynomial, multiply_tuple((-2, 3, 0, 0), x_end))
 		x_polynomial = add_tuples(x_polynomial, multiply_tuple((1, -2, 1, 0), x_start_slope))
@@ -24,22 +24,36 @@ class SplineCurve:
 		
 		y_start = point_a[1]
 		y_end = point_b[1]
-		y_start_slope = cmath.sin(tangent_a)
-		y_end_slope = cmath.sin(tangent_b)
+		y_start_slope = tangent_a[1]
+		y_end_slope = tangent_b[1]
 		y_polynomial = multiply_tuple((2, -3, 0, 1), y_start)
 		y_polynomial = add_tuples(y_polynomial, multiply_tuple((-2, 3, 0, 0), y_end))
 		y_polynomial = add_tuples(y_polynomial, multiply_tuple((1, -2, 1, 0), y_start_slope))
 		self.yCoefficients = add_tuples(y_polynomial, multiply_tuple((1, -1, 0, 0), y_end_slope))
 	
 	def get_coord(self, u):
-		x = pow(u, 3) * self.xCoefficients[0] + pow(u, 2) * self.xCoefficients[1] +\
+		x = pow(u, 3) * self.xCoefficients[0] + pow(u, 2) * self.xCoefficients[1] + \
 			u * self.xCoefficients[2] + self.xCoefficients[3]
-		y = pow(u, 3) * self.yCoefficients[0] + pow(u, 2) * self.yCoefficients[1] +\
+		y = pow(u, 3) * self.yCoefficients[0] + pow(u, 2) * self.yCoefficients[1] + \
 			u * self.yCoefficients[2] + self.yCoefficients[3]
 		return x, y
 	
-	def draw_spline(self, window, num_lines):
-		return 0#todo finish
+	def draw_spline(self, window, num_points):
+		points = []
+		for i in range(num_points):
+			points.append(self.get_coord(i / num_points))
+		self.undraw_spline()
+		for i in range(num_points - 1):
+			self.lines.append(Line(convert_point(points[i]), convert_point(points[i + 1])))
+			self.lines[-1].draw(window)
+			
+	def undraw_spline(self):
+		for line in self.lines:
+			line.undraw()
+		self.lines = []
+	
+	def print_data(self):
+		print(f"x coefficients: {self.xCoefficients}\ny coefficients: {self.yCoefficients}")
 
 
 def multiply_tuple(t, s):
@@ -48,10 +62,18 @@ def multiply_tuple(t, s):
 
 def add_tuples(a, b):
 	return tuple(a[i] + b[i] for i in range(len(a)))
-		
-		
+
+
+def convert_point(t):
+	return make_point(t[0], t[1])
+
+
 def make_point(x, y):
 	return Point(int(x) + screen_width // 2, screen_height // 2 - int(y))
+
+
+def convert_point_to_tuple(point):
+	return point.x - screen_width // 2, screen_height // 2 - point.y
 
 
 def clear(win):
@@ -123,7 +145,7 @@ def rotations(window, coefficients):
 
 
 def generate_random_coefficients(amount):
-	size = 200
+	size = 100
 	coefficients = [
 		complex(0, 0)
 	]
@@ -140,13 +162,29 @@ def generate_random_coefficients(amount):
 
 def main():
 	window = GraphWin("Main Window", screen_width, screen_height, autoflush=False)
-	"""
+	#"""
 	coefficients = generate_random_coefficients(10)
-	rotations(window, coefficients)"""
-	spline = SplineCurve((-100, 0), 45, (100, 0), -45)
-	spline.draw_spline(window, 100)
-	window.getMouse()
-	window.close()
+	rotations(window, coefficients)
+	"""
+	points = [
+		(-100, 0),
+		(100, 0)
+	]
+	tangents = [
+		(0, -100),
+		(0, 100)
+	]
+	splines = [
+		SplineCurve(points[-1], tangents[-1], points[0], tangents[0]),
+		SplineCurve(points[0], tangents[0], points[1], tangents[1])
+	]
+	while window.isOpen():
+		point = window.checkMouse()
+		if isinstance(point, Point):
+			key = window.checkKey()
+			point = convert_point_to_tuple(point)
+			update(50)
+#"""
 
 
 if __name__ == '__main__':
