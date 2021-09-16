@@ -1,4 +1,5 @@
 import cmath
+import math
 import random as r
 
 from graphics import *
@@ -38,12 +39,12 @@ class SplineCurve:
 			u * self.yCoefficients[2] + self.yCoefficients[3]
 		return x, y
 	
-	def draw_spline(self, window, num_points):
+	def draw_spline(self, window, num_lines):
 		points = []
-		for i in range(num_points):
-			points.append(self.get_coord(i / num_points))
+		for i in range(num_lines + 1):
+			points.append(self.get_coord(i / num_lines))
 		self.undraw_spline()
-		for i in range(num_points - 1):
+		for i in range(num_lines):
 			self.lines.append(Line(convert_point(points[i]), convert_point(points[i + 1])))
 			self.lines[-1].draw(window)
 			
@@ -57,7 +58,7 @@ class SplineCurve:
 
 
 def multiply_tuple(t, s):
-	return tuple(s * i for i in t)
+	return tuple(int(s * i) for i in t)
 
 
 def add_tuples(a, b):
@@ -162,7 +163,7 @@ def generate_random_coefficients(amount):
 
 def main():
 	window = GraphWin("Main Window", screen_width, screen_height, autoflush=False)
-	#"""
+	"""
 	coefficients = generate_random_coefficients(10)
 	rotations(window, coefficients)
 	"""
@@ -170,20 +171,64 @@ def main():
 		(-100, 0),
 		(100, 0)
 	]
+	draw_points = []
 	tangents = [
-		(0, -100),
-		(0, 100)
+		(0, -1000),
+		(0, 1000)
 	]
 	splines = [
 		SplineCurve(points[-1], tangents[-1], points[0], tangents[0]),
 		SplineCurve(points[0], tangents[0], points[1], tangents[1])
 	]
+	for spline in splines:
+		spline.draw_spline(window, 100)
+	for p in points:
+		draw_points.append(Circle(convert_point(p), 2))
+		draw_points[-1].setFill("black")
+		draw_points[-1].draw(window)
+	selected_point = None
+	tangent_line = None
+	tangent_point_circle = None
 	while window.isOpen():
 		point = window.checkMouse()
-		if isinstance(point, Point):
-			key = window.checkKey()
+		key = window.checkKey()
+		print(key)
+		if point is not None:
 			point = convert_point_to_tuple(point)
+			if selected_point is None:
+				distances = []
+				for p in points:
+					distances.append(math.sqrt(pow(point[0] - p[0], 2) + pow(point[1] - p[1], 2)))
+				selected_point = distances.index(min(distances))
+				tangent_point = add_tuples(points[selected_point], tangents[selected_point])
+				tangent_point_circle = Circle(convert_point(multiply_tuple(tangent_point, 0.1)), 2)
+				tangent_point_circle.setFill("black")
+				tangent_point_circle.draw(window)
+			else:
+				points[selected_point] = point
+				draw_points[selected_point].undraw()
+				draw_points[selected_point] = Circle(convert_point(point), 2)
+				draw_points[selected_point].setFill("black")
+				draw_points[selected_point].draw(window)
+				splines[selected_point].undraw_spline()
+				splines[selected_point] = SplineCurve(
+					points[selected_point - 1], tangents[selected_point - 1],
+					points[selected_point], tangents[selected_point]
+				)
+				splines[selected_point].draw_spline(window, 100)
+				splines[(selected_point + 1) % len(splines)].undraw_spline()
+				splines[(selected_point + 1) % len(splines)] = SplineCurve(
+					points[selected_point], tangents[selected_point],
+					points[(selected_point + 1) % len(splines)], tangents[(selected_point + 1) % len(splines)]
+				)
+				splines[(selected_point + 1) % len(splines)].draw_spline(window, 100)
+				tangent_point = add_tuples(points[selected_point], tangents[selected_point])
+				tangent_point_circle.undraw()
+				tangent_point_circle = Circle(convert_point(multiply_tuple(tangent_point, 0.1)), 2)
+				tangent_point_circle.setFill("black")
+				tangent_point_circle.draw(window)
 			update(50)
+
 #"""
 
 
