@@ -189,10 +189,23 @@ def main():
 	selected_point = None
 	tangent_line = None
 	tangent_point_circle = None
+	last_key = "Escape"
+	key_messages = {
+		"space":     "Mode: Move Point",
+		"Control_L": "Mode: Move Tangent",
+		"Escape":    "Mode: Select Point",
+		"Shift_L":   "Mode: Add Point"
+	}
+	key_message = Text(Point(screen_width // 2, 6), key_messages[last_key])
+	key_message.draw(window)
 	while window.isOpen():
 		point = window.checkMouse()
 		key = window.checkKey()
-		print(key)
+		if key != "":
+			last_key = key
+			key_message.undraw()
+			key_message = Text(Point(screen_width // 2, 6), key_messages[last_key])
+			key_message.draw(window)
 		if point is not None:
 			point = convert_point_to_tuple(point)
 			if selected_point is None:
@@ -200,16 +213,39 @@ def main():
 				for p in points:
 					distances.append(math.sqrt(pow(point[0] - p[0], 2) + pow(point[1] - p[1], 2)))
 				selected_point = distances.index(min(distances))
-				tangent_point = add_tuples(points[selected_point], tangents[selected_point])
-				tangent_point_circle = Circle(convert_point(multiply_tuple(tangent_point, 0.1)), 2)
+				tangent_point = add_tuples(points[selected_point], multiply_tuple(tangents[selected_point], 0.1))
+				tangent_point_circle = Circle(convert_point(tangent_point), 2)
 				tangent_point_circle.setFill("black")
 				tangent_point_circle.draw(window)
+				tangent_line = Line(convert_point(points[selected_point]), convert_point(tangent_point))
+				tangent_line.draw(window)
+				last_key = "space"
+				key_message.undraw()
+				key_message = Text(Point(screen_width // 2, 6), key_messages[last_key])
+				key_message.draw(window)
 			else:
-				points[selected_point] = point
-				draw_points[selected_point].undraw()
-				draw_points[selected_point] = Circle(convert_point(point), 2)
-				draw_points[selected_point].setFill("black")
-				draw_points[selected_point].draw(window)
+				if last_key == "space":
+					points[selected_point] = point
+					draw_points[selected_point].undraw()
+					draw_points[selected_point] = Circle(convert_point(point), 2)
+					draw_points[selected_point].setFill("black")
+					draw_points[selected_point].draw(window)
+				elif last_key == "Control_L":
+					tangents[selected_point] = \
+						multiply_tuple(add_tuples(point, multiply_tuple(points[selected_point], -1)), 10)
+				elif last_key == "Escape":
+					tangent_point_circle.undraw()
+					tangent_line.undraw()
+					selected_point = None
+					continue
+				elif last_key == "Shift_L":
+					points.insert(selected_point, point)
+					tangents.insert(selected_point, (1, 0))
+					splines.insert(selected_point, SplineCurve((0, 0), (1, 1), (0, 0), (1, 1)))
+					draw_points.insert(selected_point, Circle(convert_point(points[selected_point]), 2))
+					draw_points[selected_point].setFill("black")
+					draw_points[selected_point].draw(window)
+					last_key = "Control_L"
 				splines[selected_point].undraw_spline()
 				splines[selected_point] = SplineCurve(
 					points[selected_point - 1], tangents[selected_point - 1],
@@ -222,11 +258,14 @@ def main():
 					points[(selected_point + 1) % len(splines)], tangents[(selected_point + 1) % len(splines)]
 				)
 				splines[(selected_point + 1) % len(splines)].draw_spline(window, 100)
-				tangent_point = add_tuples(points[selected_point], tangents[selected_point])
+				tangent_point = add_tuples(points[selected_point], multiply_tuple(tangents[selected_point], 0.1))
 				tangent_point_circle.undraw()
-				tangent_point_circle = Circle(convert_point(multiply_tuple(tangent_point, 0.1)), 2)
+				tangent_point_circle = Circle(convert_point(tangent_point), 2)
 				tangent_point_circle.setFill("black")
 				tangent_point_circle.draw(window)
+				tangent_line.undraw()
+				tangent_line = Line(convert_point(points[selected_point]), convert_point(tangent_point))
+				tangent_line.draw(window)
 			update(50)
 
 #"""
