@@ -167,6 +167,8 @@ def main():
 	coefficients = generate_random_coefficients(10)
 	rotations(window, coefficients)
 	"""
+	print(math.degrees(math.atan2(2, 1)))
+	return 0
 	points = [
 		(-100, 0),
 		(100, 0)
@@ -239,6 +241,17 @@ def main():
 					selected_point = None
 					continue
 				elif last_key == "Shift_L":
+					first_dist = math.sqrt(
+						pow(point[0] - points[selected_point - 1][0], 2) +
+						pow(point[1] - points[selected_point - 1][1], 2)
+					)
+					second_dist = math.sqrt(
+						pow(point[0] - points[(selected_point + 1) % len(points)][0], 2) +
+						pow(point[1] - points[(selected_point + 1) % len(points)][1], 2)
+					)
+					if second_dist < first_dist:
+						selected_point += 1
+						selected_point %= len(points)
 					points.insert(selected_point, point)
 					tangents.insert(selected_point, (1, 0))
 					splines.insert(selected_point, SplineCurve((0, 0), (1, 1), (0, 0), (1, 1)))
