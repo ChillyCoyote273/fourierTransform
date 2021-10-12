@@ -163,13 +163,15 @@ def generate_random_coefficients(amount):
 
 def init_drawings(win, points, lines, draw_points):
 	graphic_points = [convert_point(t) for t in points]
-	draw_points = [Circle(graphic_points[i], 2) for i in range(len(points))]
+	draw_points_new = [Circle(graphic_points[i], 2) for i in range(len(points))]
 	
-	lines = [Line(graphic_points[i], graphic_points[(i + 1) % len(points)]) for i in range(len(points))]
+	lines_new = [Line(graphic_points[i], graphic_points[(i + 1) % len(points)]) for i in range(len(points))]
 
 	for i in range(len(points)):
+		draw_points.append(draw_points_new[i])
 		draw_points[i].setFill("black")
 		draw_points[i].draw(win)
+		lines.append(lines_new[i])
 		lines[i].draw(win)
 
 
@@ -188,9 +190,20 @@ def render_drawing(win, points, lines, draw_points, update_index):
 	lines[update_index - 1].draw(win)
 	
 	draw_points[update_index].undraw()
-	draw_points[update_index] = Circle(convert_point(points[update_index]), 2)
+	draw_points[update_index] = Circle(convert_point(points[update_index]), 5)
 	draw_points[update_index].setFill("black")
 	draw_points[update_index].draw(win)
+	
+	
+def find_closest_point(point, points):
+	distances = [math.hypot(point[0] - points[i][0], point[1] - points[i][1]) for i in range(len(points))]
+	return distances.index(min(distances))
+
+
+def swap_with_next(ls, index):
+	temp = ls[index]
+	ls[index] = ls[index + 1]
+	ls[index + 1] = temp
 
 
 def main():
@@ -209,7 +222,48 @@ def main():
 	lines = []
 	draw_points = []
 	init_drawings(window, points, lines, draw_points)
-	window.getMouse()
+	index = None
+	while window.isOpen():
+		click = window.checkMouse()
+		if click is not None:
+			click = convert_point_to_tuple(click)
+			if index is None:
+				index = find_closest_point(click, points)
+			else:
+				if points[index] is not None:
+					points[index] = click
+				else:
+					temp = find_closest_point(click, [points[index - 1], points[index + 1]])
+					points[index] = click
+					if temp == 1:
+						swap_with_next(points, index)
+						swap_with_next(lines, index)
+						swap_with_next(draw_points, index)
+						index += 1
+			render_drawing(window, points, lines, draw_points, index)
+		key = window.checkKey()
+		if key is not None and index is not None:
+			if key == "Shift_L":
+				draw_points[index].undraw()
+				draw_points[index] = Circle(convert_point(points[index]), 2)
+				draw_points[index].setFill("black")
+				draw_points[index].draw(window)
+				points.insert(index, None)
+				draw_points.insert(index, Circle(Point(0, 0), 0))
+				lines.insert(index, Line(Point(0, 0), Point(0, 0)))
+			elif key == "space":
+				draw_points[index].undraw()
+				draw_points[index] = Circle(convert_point(points[index]), 2)
+				draw_points[index].setFill("black")
+				draw_points[index].draw(window)
+				index = None
+			elif key == "f":
+				points.pop(index)
+				lines.pop(index)
+				draw_points.pop(index)
+				render_drawing(window, points, lines, draw_points, index)
+				index = None
+		update(50)
 
 
 if __name__ == '__main__':
