@@ -148,6 +148,7 @@ def rotations(window, coefficients):
 def generate_random_coefficients(amount):
 	size = 100
 	coefficients = [
+		#complex(r.random() * 200 - 100, r.random() * 200 - 100)
 		complex(0, 0)
 	]
 	for i in range(amount):
@@ -157,7 +158,7 @@ def generate_random_coefficients(amount):
 		real = (r.random() - 0.5) * size * 2
 		imag = (r.random() - 0.5) * size * 2
 		coefficients.append(complex(real, imag))
-		size /= 1.35
+		size /= 1
 	return coefficients
 
 
@@ -208,10 +209,6 @@ def swap_with_next(ls, index):
 
 def main():
 	window = GraphWin("Main Window", screen_width, screen_height, autoflush=False)
-	"""
-	coefficients = generate_random_coefficients(10)
-	rotations(window, coefficients)
-	"""
 	
 	points = [
 		(0, 0),
@@ -251,19 +248,36 @@ def main():
 				points.insert(index, None)
 				draw_points.insert(index, Circle(Point(0, 0), 0))
 				lines.insert(index, Line(Point(0, 0), Point(0, 0)))
-			elif key == "space":
+			if key == "f":
+				if len(points) < 3:
+					continue
+				points.pop(index)
+				lines[index].undraw()
+				lines.pop(index)
+				draw_points[index].undraw()
+				draw_points.pop(index)
+				render_drawing(window, points, lines, draw_points, index)
+				key = "space"
+			if key == "space":
 				draw_points[index].undraw()
 				draw_points[index] = Circle(convert_point(points[index]), 2)
 				draw_points[index].setFill("black")
 				draw_points[index].draw(window)
 				index = None
-			elif key == "f":
-				points.pop(index)
-				lines.pop(index)
-				draw_points.pop(index)
-				render_drawing(window, points, lines, draw_points, index)
-				index = None
+			if key == "Return":
+				break
 		update(50)
+	
+	coefficients = [
+		complex(0, 0),
+		complex(100, 0),
+		complex(-100, 0),
+		complex(0, 100),
+		complex(0, -100),
+		complex(50, 0),
+		complex(-50, 0)
+	]
+	rotations(window, coefficients)
 
 
 if __name__ == '__main__':
