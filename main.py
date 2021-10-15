@@ -205,6 +205,53 @@ def swap_with_next(ls, index):
 	temp = ls[index]
 	ls[index] = ls[index + 1]
 	ls[index + 1] = temp
+	
+	
+def get_sample_points(points, samples_per_line):
+	complex_points = [complex(p[0], p[1]) for p in points]
+	sample_points = []
+	for i in range(len(points)):
+		points_on_line = []
+		for j in range(samples_per_line):
+			ratio = j / samples_per_line
+			sample_point = (complex_points[i] - complex_points[i - 1]) * ratio + complex_points[i - 1]
+			points_on_line.append(sample_point)
+		sample_points.extend(points_on_line)
+	return sample_points
+
+
+def calculate_average_point(sample_points):
+	acc = complex(0, 0)
+	for point in sample_points:
+		acc += point
+	acc /= len(sample_points)
+	return acc
+
+
+def complex_fourier_transform(sample_points, num_terms):
+	coefficients = []
+	for i in range(num_terms + 1):
+		points = []
+		rotation_speed = i
+		for j in range(len(sample_points)):
+			point = sample_points[j] * cmath.exp(complex(0, -2 * math.pi * rotation_speed * (j / len(sample_points))))
+			points.append(point)
+		coefficients.append(calculate_average_point(points))
+		
+		points = []
+		rotation_speed = -i
+		for j in range(len(sample_points)):
+			point = sample_points[j] * cmath.exp(complex(0, -2 * math.pi * rotation_speed * (j / len(sample_points))))
+			points.append(point)
+		coefficients.append(calculate_average_point(points))
+		
+	coefficients.pop(0)
+	return coefficients
+	
+	
+def calculate_coefficients(points, samples_per_line, num_terms):
+	sample_points = get_sample_points(points, samples_per_line)
+	return complex_fourier_transform(sample_points, num_terms)
 
 
 def main():
@@ -264,19 +311,12 @@ def main():
 				draw_points[index].setFill("black")
 				draw_points[index].draw(window)
 				index = None
-			if key == "Return":
-				break
+		if key == "Return":
+			break
 		update(50)
 	
-	coefficients = [
-		complex(0, 0),
-		complex(100, 0),
-		complex(-100, 0),
-		complex(0, 100),
-		complex(0, -100),
-		complex(50, 0),
-		complex(-50, 0)
-	]
+	coefficients = calculate_coefficients(points, 10, 20)
+	coefficients = generate_random_coefficients(3)
 	rotations(window, coefficients)
 
 
